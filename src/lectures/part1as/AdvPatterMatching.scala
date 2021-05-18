@@ -48,4 +48,61 @@ object AdvPatterMatching extends App {
     case _ => "Both values are equal"
   }
   println(matched3)
+
+  case class Or[A, B](a: A, b: B)
+  val either = Or(2, "Two")
+  val matched4 = either match {
+    case Or(q, w) => s"$q is $w"
+  }
+
+  println(matched4)
+
+  object gtThan {
+    def unapplySeq(l: List[Int]): Option[Seq[Boolean]] = Option(Seq(l.head > l.tail.head))
+  }
+
+  object lsThan {
+    def unapplySeq(l: List[Int]): Option[Seq[Boolean]] = Some(Seq(l.head < l.tail.head))
+  }
+
+  val matched5 = List(20, 30) match {
+    case gtThan(_) => "Matches greater than"
+    case lsThan(_) => "Matches less than"
+    case _ => "Nothing matched"
+  }
+
+  println(matched5)
+
+  abstract class Wrapper[T] {
+    def isEmpty: Boolean
+    def get: T
+  }
+
+  object PersonPattern1 {
+    def unapply(person: Person): Wrapper[String] = new Wrapper[String] {
+      def isEmpty = false
+      def get = person.name
+    }
+  }
+
+  object PersonPattern2 {
+    def unapply(person: Person): Wrapper[String] = new Wrapper[String] {
+      def isEmpty = false
+      def get = person.name
+    }
+  }
+
+  val matched6 = lilly match {
+    case PersonPattern1(n) => "Matches person 1"
+    case _ => "Not Matched 1"
+  }
+
+  val matched7 = lilly match {
+    case PersonPattern2(n) => "Matches person 2"
+    case _ => "Not Matched 2"
+  }
+
+  println(matched6)
+  println(matched7)
+
 }
