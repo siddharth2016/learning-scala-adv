@@ -35,4 +35,17 @@ object Intro extends App {
 
   pool.shutdown()
   println(pool.isShutdown)
+
+  def inceptionThread(maxThreads: Int, i: Int = 1): Thread = new Thread(() => {
+    if (i < maxThreads) {
+      val newThread = inceptionThread(maxThreads, i+1)
+      newThread.start()
+      newThread.join()
+    }
+    println(s"Hello from thread $i")
+  })
+
+  inceptionThread(50).start()
+
+
 }
