@@ -1,5 +1,9 @@
 package lectures.part3concurrency
 
+import scala.collection.mutable
+import scala.language.postfixOps
+import scala.util.Random
+
 object ThreadCommunication extends App {
 
   class SimpleContainer {
@@ -63,5 +67,53 @@ object ThreadCommunication extends App {
     producer.start()
   }
 
-  smartProdCons()
+//  smartProdCons()
+
+  def prodConsLargeBuffer = {
+    val buffer: mutable.Queue[Int] = new mutable.Queue[Int]
+    val cap: Int = 3
+
+    def consumer = new Thread(() => {
+      val random = new Random()
+
+      while(true) {
+        buffer.synchronized {
+          if (buffer.isEmpty) {
+            println("consumer is waiting...")
+            buffer.wait()
+          }
+          val x = buffer.dequeue()
+          println("consumer consumed  " + x)
+          buffer.notify()
+        }
+
+        Thread.sleep(random.nextInt(500))
+      }
+    })
+
+    def producer = new Thread(() => {
+      val random = new Random()
+      var i = 0
+
+      while(true) {
+        buffer.synchronized {
+          if (buffer.size == cap) {
+          println("producer is working hard here...")
+          buffer.wait()
+        }
+
+        println("producer produced " + i)
+        buffer.enqueue(i)
+          buffer.notify()
+        i += 1
+      }
+      Thread.sleep(random.nextInt(500))
+      }
+    })
+
+    producer.start()
+    consumer.start()
+  }
+
+  prodConsLargeBuffer
 }
