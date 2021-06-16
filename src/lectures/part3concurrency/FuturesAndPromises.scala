@@ -122,4 +122,7 @@ object FuturesAndPromises extends App {
   })
 
   producer.start()
+
+  // Exercises
+
 }
