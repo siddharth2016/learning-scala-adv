@@ -1,7 +1,9 @@
 package lectures.part3concurrency
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
+import scala.concurrent.duration._
+import scala.concurrent.{Await, Future}
+import scala.language.postfixOps
 import scala.util.{Failure, Random, Success}
 
 object FuturesAndPromises extends App {
@@ -65,10 +67,40 @@ object FuturesAndPromises extends App {
 
   val err3 = SocialNetwork.fetchProfile("no name").fallbackTo(SocialNetwork.fetchProfile("id4"))
 
-  Thread.sleep(1000)
+//  Thread.sleep(1000)
+//
+//  println(err)
+//  println(sid)
+//  println(err2)
+//  println(err3)
 
-  println(err)
-  println(sid)
-  println(err2)
-  println(err3)
+  // Using Await.result to wait till future computation is in the play
+
+  case class User(name: String)
+  case class Transaction(user: User, merchant: String, amount: Int, status: String)
+
+  object BankingApp {
+    val names = "Something"
+
+    def fetchUser(name: String): Future[User] = Future {
+      Thread.sleep(500)
+      User(name)
+    }
+
+    def createTransaction(user: User, merchant: String, amount: Int): Future[Transaction] = Future {
+      Thread.sleep(1000)
+      Transaction(user, merchant, 1000, "SUCCESS")
+    }
+
+    def purchase(per1: String, per2: String, amt: Int): String = {
+      val status = for {
+        u <- fetchUser(per1)
+        t <- createTransaction(u, per2, amt)
+      } yield t.status
+
+      Await.result(status, 2 seconds)
+    }
+  }
+
+  println(BankingApp.purchase("Sid", "Abhi", 1000))
 }
