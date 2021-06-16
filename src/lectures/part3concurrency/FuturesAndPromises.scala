@@ -2,7 +2,7 @@ package lectures.part3concurrency
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
-import scala.concurrent.{Await, Future}
+import scala.concurrent.{Await, Future, Promise}
 import scala.language.postfixOps
 import scala.util.{Failure, Random, Success}
 
@@ -102,5 +102,24 @@ object FuturesAndPromises extends App {
     }
   }
 
-  println(BankingApp.purchase("Sid", "Abhi", 1000))
+//  println(BankingApp.purchase("Sid", "Abhi", 1000))
+  // Using Promises
+
+  val promise = Promise[Int]()
+  val future = promise.future
+
+  // Consumer thread
+  future.onComplete {
+    case Success(res) => println("[consumer] Done getting value " + res)
+  }
+
+  // Producer thread
+  val producer = new Thread(() => {
+    println("[producer] starting producing numbers...")
+    Thread.sleep(500)
+    promise.success(42)
+    println("[producer] produced the number")
+  })
+
+  producer.start()
 }
