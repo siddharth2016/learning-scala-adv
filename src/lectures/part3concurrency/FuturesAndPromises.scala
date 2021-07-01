@@ -4,7 +4,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future, Promise}
 import scala.language.postfixOps
-import scala.util.{Failure, Random, Success}
+import scala.util.{Failure, Random, Success, Try}
 
 object FuturesAndPromises extends App {
   def someValue = 42
@@ -13,12 +13,12 @@ object FuturesAndPromises extends App {
     someValue
   }
 
-  println(aFuture.value)    // Option[Try[Int]]
+//  println(aFuture.value)    // Option[Try[Int]]
 
-  aFuture.onComplete {
-    case Success(value) => println("It is a Success " + value)
-    case Failure(exception) => println("It is a Failure " + exception)
-  }
+//  aFuture.onComplete {
+//    case Success(value) => println("It is a Success " + value)
+//    case Failure(exception) => println("It is a Failure " + exception)
+//  }
 
 //  Thread.sleep(3000)
 
@@ -121,8 +121,64 @@ object FuturesAndPromises extends App {
     println("[producer] produced the number")
   })
 
-  producer.start()
+//  producer.start()
 
   // Exercises
+
+  /*
+  1) Fulfill a future Immediately with a value
+  2) inSeq(fa, fb)
+  3) first(fa, fb) => new future with the first value of the furture
+  4) last(fa, fb) => new future with the last value of the future
+  5) retryUntil[T](action: () => Future[T], condition: T => Boolean): Future[T]
+   */
+
+
+  // 1
+  println("ex 1")
+  def fulfillImmediately[T](value: T): Future[T] = Future(value)
+  println(fulfillImmediately(5).value)
+
+  // 2
+  println("ex 2")
+  def inSeq[A, B](fa: Future[A], fb: Future[B]): Future[B] =
+    fa.flatMap(_ => fb)
+
+  // 3
+  println("ex 3")
+  def first[A](fa: Future[A], fb: Future[A]): Future[A] = {
+    val promise = Promise[A]
+    fa.onComplete(promise.tryComplete)
+    fb.onComplete(promise.tryComplete)
+    promise.future
+  }
+
+  // 4
+  println("ex 4")
+  def last[A](fa: Future[A], fb: Future[A]): Future[A] = {
+    val bothPromise = Promise[A]
+    val lastPromise = Promise[A]
+    val checkAndComplete = (result: Try[A]) => {
+      if(!bothPromise.tryComplete(result))
+        lastPromise.complete(result)
+    }
+
+    fa.onComplete(checkAndComplete)
+    fb.onComplete(checkAndComplete)
+
+    lastPromise.future
+  }
+
+  // 5
+  println("ex 5")
+  def retryUntil[A](action: () => Future[A], condition: A => Boolean): Future[A] = {
+    action()
+      .filter(condition)
+      .recoverWith {
+        case _ => retryUntil(action, condition)
+      }
+  }
+
+
 
 }
